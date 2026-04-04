@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mesin Antrian Offline</title>
+    <style>
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; padding: 20px; background-color: #f0f2f5; color: #333; margin: 0; }
+        .card { max-width: 500px; background: white; padding: 25px; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); margin: auto; }
+        h2 { text-align: center; color: #1a73e8; margin-top: 0; }
+        .form-group { margin-bottom: 15px; }
+        label { display: block; font-weight: bold; margin-bottom: 8px; font-size: 14px; }
+        input[type="text"], select { width: 100%; padding: 12px; border: 1px solid #ccc; border-radius: 6px; box-sizing: border-box; font-size: 15px; }
+        .settings-box { background: #e8f0fe; padding: 15px; border-radius: 8px; margin-bottom: 25px; border: 1px solid #d2e3fc; }
+        .nomor-display { font-size: 60px; font-weight: bold; text-align: center; color: #188038; margin: 20px 0; background: #e6f4ea; padding: 10px; border-radius: 8px; border: 2px dashed #188038; }
+        button { width: 100%; padding: 15px; background-color: #1a73e8; color: white; border: none; border-radius: 6px; font-size: 18px; font-weight: bold; cursor: pointer; transition: 0.3s; margin-bottom: 10px; }
+        button:hover { background-color: #1557b0; }
+        .btn-reset { background-color: #d93025; font-size: 14px; padding: 10px; }
+        .btn-reset:hover { background-color: #a50e0e; }
+    </style>
+</head>
+<body>
+
+<div class="card">
+    <h2>Sistem Antrian ANISATEK</h2>
+    
+    <!-- Pengaturan Disimpan di LocalStorage HP -->
+    <div class="settings-box">
+        <div class="form-group">
+            <label for="namaToko">Nama Toko / Instansi:</label>
+            <input type="text" id="namaToko" placeholder="Masukkan Nama Toko" oninput="simpanPengaturan()">
+        </div>
+        <div class="form-group">
+            <label for="ukuranKertas">Ukuran Kertas Printer:</label>
+            <select id="ukuranKertas" onchange="simpanPengaturan()">
+                <option value="58">58 mm (Standard)</option>
+                <option value="80">80 mm (Besar)</option>
+            </select>
+        </div>
+    </div>
+
+    <div class="form-group">
+        <label for="keterangan">Keterangan (Opsional):</label>
+        <input type="text" id="keterangan" placeholder="Misal: CS, Kasir, Umum">
+    </div>
+
+    <button id="btnAmbil" onclick="mintaNomorKeKodular()">Ambil Nomor & Cetak</button>
+    
+    <div class="nomor-display" id="tampilNomor">0000</div>
+
+    <button class="btn-reset" onclick="resetManual()">Reset Antrian ke 0001</button>
+</div>
+
+<script>
+    // 1. Muat pengaturan saat halaman dibuka
+    window.onload = function() {
+        if(localStorage.getItem('namaToko')) {
+            document.getElementById('namaToko').value = localStorage.getItem('namaToko');
+        }
+        if(localStorage.getItem('ukuranKertas')) {
+            document.getElementById('ukuranKertas').value = localStorage.getItem('ukuranKertas');
+        }
+    };
+
+    // 2. Simpan pengaturan ke LocalStorage (Memori Webview)
+    function simpanPengaturan() {
+        localStorage.setItem('namaToko', document.getElementById('namaToko').value);
+        localStorage.setItem('ukuranKertas', document.getElementById('ukuranKertas').value);
+    }
+
+    // 3. Kirim Perintah ke Kodular (Trigger TinyDB)
+    function mintaNomorKeKodular() {
+        const ket = document.getElementById('keterangan').value || "-";
+        const toko = document.getElementById('namaToko').value || "Antrian";
+        const kertas = document.getElementById('ukuranKertas').value;
+
+        if (window.AppInventor) {
+            // Kita kirim data dengan format: PERINTAH|KETERANGAN|NAMATOKO|UKURANKERTAS
+            const dataKirim = `AMBIL_ANTRIAN|${ket}|${toko}|${kertas}`;
+            window.AppInventor.setWebViewString(dataKirim);
+        } else {
+            console.log("Berjalan di Browser (Bukan Kodular)");
+        }
+    }
+
+    // 4. Fungsi yang akan DIPANGGIL OLEH KODULAR via RunJavaScript
+    // Ini dipanggil setelah Kodular selesai memproses nomor di TinyDB
+    function updateTampilanNomor(nomorBaru) {
+        let nomorStr = String(nomorBaru).padStart(4, '0');
+        document.getElementById('tampilNomor').innerText = nomorStr;
+        document.getElementById('keterangan').value = ""; // Bersihkan kolom keterangan
+    }
+
+    // 5. Fungsi Reset Manual
+    function resetManual() {
+        if (confirm("Yakin ingin mereset antrian kembali ke awal?")) {
+            if (window.AppInventor) {
+                window.AppInventor.setWebViewString("RESET_MANUAL|sekarang");
+            }
+        }
+    }
+</script>
+
+</body>
+</html>

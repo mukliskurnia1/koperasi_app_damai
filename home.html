@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+  <title>Beranda Anggota</title>
+  
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+  
+  <style>
+    /* Mencegah teks terblok biru saat diklik cepat di HP */
+    body { background-color: #f4f7f6; font-family: 'Segoe UI', sans-serif; padding: 15px; user-select: none; }
+    
+    /* Desain Banner Atas */
+    .welcome-banner { 
+      background: linear-gradient(135deg, #198754, #20c997); 
+      color: white; 
+      border-radius: 15px; 
+      padding: 25px 20px; 
+      margin-bottom: 25px; 
+      box-shadow: 0 5px 15px rgba(25, 135, 84, 0.2); 
+      position: relative;
+      overflow: hidden;
+    }
+    .welcome-banner::after {
+      content: '\f2b5'; /* Ikon jabat tangan FontAwesome samar di background */
+      font-family: "Font Awesome 5 Free";
+      font-weight: 900;
+      position: absolute;
+      right: -10px;
+      bottom: -20px;
+      font-size: 100px;
+      color: rgba(255, 255, 255, 0.1);
+    }
+    
+    /* Desain Tombol Menu */
+    .card-menu { 
+      border: none; 
+      border-radius: 15px; 
+      box-shadow: 0 4px 10px rgba(0,0,0,0.04); 
+      transition: transform 0.1s ease, box-shadow 0.1s ease; 
+      cursor: pointer; 
+      background: white;
+    }
+    /* Efek saat tombol ditekan (Pressed) */
+    .card-menu:active { 
+      transform: scale(0.95); 
+      background-color: #f8f9fa;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.05); 
+    }
+    
+    /* Desain Lingkaran Ikon */
+    .icon-box { 
+      width: 55px; 
+      height: 55px; 
+      border-radius: 50%; 
+      display: flex; 
+      justify-content: center; 
+      align-items: center; 
+      margin: 0 auto 12px; 
+      font-size: 1.6rem; 
+    }
+    .bg-icon-saldo { background-color: #e8f5e9; color: #198754; }  /* Hijau */
+    .bg-icon-pinjam { background-color: #fff3cd; color: #ffc107; } /* Kuning */
+    .bg-icon-neraca { background-color: #e2e3e5; color: #495057; } /* Abu-abu */
+    .bg-icon-shu { background-color: #cff4fc; color: #0dcaf0; }    /* Biru Muda */
+    
+    .menu-title { font-size: 0.85rem; font-weight: 700; color: #333; line-height: 1.3; }
+  </style>
+</head>
+<body>
+
+  <!-- BANNER SELAMAT DATANG -->
+  <div class="welcome-banner">
+    <h4 class="fw-bold mb-1">Beranda Koperasi</h4>
+    <div class="small opacity-75" style="font-size: 13px;">Layanan Informasi Anggota Mobile</div>
+  </div>
+
+  <!-- GRID MENU UTAMA -->
+  <div class="row g-3">
+    
+    <!-- Menu 1: Cek Saldo & Riwayat -->
+    <div class="col-6">
+      <div class="card card-menu h-100" onclick="bukaMenu('CEK_SALDO')">
+         <div class="card-body text-center p-3">
+            <div class="icon-box bg-icon-saldo"><i class="fas fa-wallet"></i></div>
+            <div class="menu-title">Cek Saldo &<br>Riwayat</div>
+         </div>
+      </div>
+    </div>
+
+    <!-- Menu 2: Pengajuan Pinjaman -->
+    <div class="col-6">
+      <div class="card card-menu h-100" onclick="bukaMenu('PENGAJUAN')">
+         <div class="card-body text-center p-3">
+            <div class="icon-box bg-icon-pinjam"><i class="fas fa-hand-holding-usd"></i></div>
+            <div class="menu-title">Pengajuan<br>Pinjaman</div>
+         </div>
+      </div>
+    </div>
+
+    <!-- Menu 3: Laporan Neraca -->
+    <div class="col-6">
+      <div class="card card-menu h-100" onclick="bukaMenu('NERACA')">
+         <div class="card-body text-center p-3">
+            <div class="icon-box bg-icon-neraca"><i class="fas fa-balance-scale"></i></div>
+            <div class="menu-title">Laporan<br>Neraca</div>
+         </div>
+      </div>
+    </div>
+
+    <!-- Menu 4: Informasi SHU -->
+    <div class="col-6">
+      <div class="card card-menu h-100" onclick="bukaMenu('SHU')">
+         <div class="card-body text-center p-3">
+            <div class="icon-box bg-icon-shu"><i class="fas fa-chart-pie"></i></div>
+            <div class="menu-title">Informasi<br>SHU</div>
+         </div>
+      </div>
+    </div>
+
+  </div> <!-- Akhir Grid -->
+
+  <!-- TOMBOL LOGOUT (KELUAR APLIKASI) -->
+  <div class="mt-4 pt-2">
+    <button class="btn btn-danger w-100 py-3 fw-bold rounded-4 shadow-sm" onclick="bukaMenu('LOGOUT')" style="font-size: 1.1rem;">
+       <i class="fas fa-sign-out-alt me-2"></i> Keluar Aplikasi
+    </button>
+  </div>
+
+  <script>
+    // Fungsi untuk mengirimkan "Kata Sandi" perintah ke Kodular
+    function bukaMenu(kodeMenu) {
+      if (window.AppInventor) {
+        // Mengirimkan kode unik ke blok "When WebViewer.WebViewStringChange" di Kodular
+        window.AppInventor.setWebViewString(kodeMenu);
+      } else {
+        // Jika dibuka lewat browser komputer biasa (untuk testing)
+        alert("Sistem mengarahkan Anda ke menu: " + kodeMenu + "\n(Fitur ini akan membuka Screen baru saat berjalan di Kodular)");
+      }
+    }
+  </script>
+
+</body>
+</html>

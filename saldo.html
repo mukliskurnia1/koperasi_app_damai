@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+  <title>Cek Saldo Mobile</title>
+  
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+  <script src="https://unpkg.com/vue@3/dist/vue.global.prod.js"></script>
+
+  <style>
+    [v-cloak] { display: none !important; }
+    body { background-color: #f4f7f6; font-family: 'Segoe UI', sans-serif; padding: 15px; padding-bottom: 30px; }
+    
+    .header-mobile { display: flex; align-items: center; margin-bottom: 20px; }
+    .btn-back { background: none; border: none; font-size: 1.5rem; color: #198754; padding: 0; margin-right: 15px; cursor: pointer; }
+    
+    .card-dashboard { border: none; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); background: white; margin-bottom: 15px; }
+    .card-header-clean { background: white; border-bottom: 2px solid #f0f0f0; padding: 12px 15px; font-weight: 700; color: #444; font-size: 0.85rem; text-transform: uppercase; }
+    
+    .badge-lancar { background-color: #d1e7dd; color: #0f5132; border: 1px solid #badbcc; }
+    .badge-macet { background-color: #f8d7da; color: #842029; border: 1px solid #f5c2c7; }
+    
+    /* Tabel Riwayat Mobile */
+    .table-history th { font-size: 9px; text-transform: uppercase; background: #343a40; color: white; text-align: center; vertical-align: middle; padding: 6px 4px; white-space: nowrap; }
+    .table-history td { font-size: 10px; text-align: right; border-right: 1px solid #f0f0f0; vertical-align: middle; padding: 4px 6px; }
+    .table-history td:first-child { text-align: left; font-weight: 700; color: #333; border-right: 2px solid #dee2e6; position: sticky; left: 0; background: white; z-index: 5; min-width: 120px; }
+    .table-history tfoot td { background-color: #e9ecef; font-weight: bold; color: #0d47a1; border-top: 2px solid #343a40; }
+    .col-bulan { min-width: 55px; } 
+  </style>
+</head>
+<body>
+
+<div id="app" v-cloak>
+  
+  <!-- HEADER & TOMBOL KEMBALI -->
+  <div class="header-mobile">
+    <button class="btn-back" @click="kembali()"><i class="fas fa-arrow-circle-left"></i></button>
+    <h5 class="mb-0 fw-bold text-success">Kartu Kontrol Saya</h5>
+  </div>
+
+  <!-- LOADING -->
+  <div v-if="loading" class="text-center py-5 my-5">
+     <div class="spinner-border text-success" style="width: 3rem; height: 3rem;"></div>
+     <p class="mt-3 fw-bold text-muted">Menyiapkan data Anda...</p>
+  </div>
+
+  <!-- AREA DATA -->
+  <div v-if="!loading && detail.profil.no">
+      
+      <!-- IDENTITAS -->
+      <div class="card card-dashboard">
+         <div class="card-body p-3">
+            <div class="d-flex justify-content-between align-items-center">
+               <div class="d-flex align-items-center">
+                  <div class="bg-success text-white rounded-circle d-flex align-items-center justify-content-center me-3" style="width: 40px; height: 40px;"><i class="fas fa-user"></i></div>
+                  <div>
+                     <div class="fw-bold text-dark" style="font-size: 14px;">{{ detail.profil.nama }}</div>
+                     <span class="badge bg-light text-dark border" style="font-size: 10px;">{{ detail.profil.no }}</span>
+                  </div>
+               </div>
+               <!-- Pilihan Tahun untuk Mobile -->
+               <select class="form-select form-select-sm fw-bold bg-light" style="width: 90px;" v-model="tahun" @change="loadDetail">
+                  <option v-for="y in years" :value="y">{{ y }}</option>
+               </select>
+            </div>
+         </div>
+      </div>
+
+      <!-- TOTAL ASET & HUTANG -->
+      <div class="row g-2 mb-2">
+         <div class="col-6">
+            <div class="card card-dashboard h-100 border-bottom border-4 border-success">
+               <div class="card-body text-center p-2 d-flex flex-column justify-content-center">
+                  <small class="text-uppercase text-muted fw-bold mb-1" style="font-size: 9px;">Total Simpanan</small>
+                  <div class="fw-bold text-success" style="font-size: 15px;">{{ formatRupiah(totalSimpanan) }}</div>
+               </div>
+            </div>
+         </div>
+         <div class="col-6">
+            <div class="card card-dashboard h-100 border-bottom border-4 border-danger">
+               <div class="card-body text-center p-2 d-flex flex-column justify-content-center">
+                  <small class="text-uppercase text-muted fw-bold mb-1" style="font-size: 9px;">Sisa Pinjaman</small>
+                  <div class="fw-bold text-danger" style="font-size: 15px;">{{ formatRupiah(totalPinjaman) }}</div>
+               </div>
+            </div>
+         </div>
+      </div>
+
+      <!-- RINCIAN SIMPANAN -->
+      <div class="card card-dashboard">
+         <div class="card-header-clean text-success bg-light"><i class="fas fa-piggy-bank me-1"></i> Simpanan Saya</div>
+         <div class="card-body p-0">
+            <table class="table table-striped mb-0 align-middle">
+               <tbody>
+                  <tr v-for="s in detail.simpanan" :key="s.akun">
+                     <td class="ps-3 fw-bold text-secondary" style="font-size: 11px;">{{ s.akun }}</td>
+                     <td class="text-end fw-bold pe-3 font-monospace text-dark" style="font-size: 12px;">{{ formatRupiah(s.saldo) }}</td>
+                  </tr>
+                  <tr v-if="detail.simpanan.length === 0"><td colspan="2" class="text-center py-3 text-muted small">Belum ada simpanan.</td></tr>
+               </tbody>
+            </table>
+         </div>
+      </div>
+
+      <!-- STATUS PINJAMAN & CICILAN -->
+      <div class="card card-dashboard">
+         <div class="card-header-clean text-danger bg-light"><i class="fas fa-money-bill-wave me-1"></i> Pinjaman & Tagihan</div>
+         <div class="card-body p-0">
+            <table class="table table-striped mb-0 align-middle">
+               <tbody>
+                  <tr v-if="detail.loans.length === 0"><td class="text-center py-4 text-muted fst-italic small">Hore! Tidak ada pinjaman aktif.</td></tr>
+                  <tr v-for="l in detail.loans" :key="l.akun">
+                     <td class="ps-3 py-2">
+                        <div class="fw-bold text-dark mb-1" style="font-size: 12px;">{{ l.akun }}</div>
+                        <div class="d-flex justify-content-between align-items-center mb-1">
+                           <span class="text-muted" style="font-size: 10px;">Sisa Pokok:</span>
+                           <span class="fw-bold font-monospace text-danger" style="font-size: 12px;">{{ formatRupiah(l.saldo) }}</span>
+                        </div>
+                        <div class="d-flex justify-content-between align-items-center bg-white border rounded p-1">
+                           <div style="font-size: 10px; line-height: 1.2;">
+                              <span class="text-muted">Cicilan:</span> <span class="fw-bold text-dark">{{ formatRupiah(l.cicilan_per_bulan) }}</span><br>
+                              <span class="text-muted">Estimasi:</span> <span class="fw-bold text-dark">{{ l.sisa_bulan }}</span> bln lagi
+                           </div>
+                           <span class="badge rounded-pill" :class="l.status === 'LANCAR' ? 'badge-lancar' : 'badge-macet'" style="font-size: 9px;">{{ l.status }}</span>
+                        </div>
+                     </td>
+                  </tr>
+               </tbody>
+            </table>
+         </div>
+      </div>
+
+      <!-- RIWAYAT MATRIX -->
+      <div class="card card-dashboard">
+         <div class="card-header-clean bg-dark text-white d-flex justify-content-between align-items-center">
+            <span><i class="fas fa-history me-1"></i> Histori Transaksi</span>
+            <span class="badge bg-warning text-dark" style="font-size: 9px;">Geser Kiri/Kanan <i class="fas fa-arrows-alt-h"></i></span>
+         </div>
+         <div class="card-body p-0 table-responsive">
+            <table class="table table-bordered table-sm mb-0 table-history">
+               <thead class="position-sticky top-0 z-10">
+                  <tr>
+                     <th>AKUN / TRANSAKSI</th>
+                     <th v-for="m in months" class="col-bulan">{{ m }}</th>
+                     <th class="bg-primary text-white">TOTAL</th>
+                  </tr>
+               </thead>
+               <tbody>
+                  <tr v-if="detail.history.length === 0">
+                     <td colspan="14" class="text-center py-4 text-muted fst-italic">Belum ada transaksi tahun ini.</td>
+                  </tr>
+                  <tr v-for="h in detail.history" :key="h.akun">
+                     <td>{{ h.akun }}</td>
+                     <td v-for="val in h.data" :class="val>0?'text-dark fw-bold bg-white':'text-muted bg-light'">{{ val > 0 ? formatFull(val) : '-' }}</td>
+                     <td class="bg-light fw-bold text-primary">{{ formatFull(h.total) }}</td>
+                  </tr>
+               </tbody>
+               <tfoot class="position-sticky bottom-0 z-10" v-if="detail.history.length > 0">
+                  <tr>
+                     <td>TOTAL TRANSAKSI</td>
+                     <td v-for="t in totalPerBulan">{{ t > 0 ? formatFull(t) : '-' }}</td>
+                     <td>{{ formatFull(grandTotalHistory) }}</td>
+                  </tr>
+               </tfoot>
+            </table>
+         </div>
+      </div>
+
+  </div>
+</div>
+
+<script>
+  // WAJIB GANTI JIKA URL APP SCRIPT ANDA BERUBAH
+  const API_URL = "https://script.google.com/macros/s/AKfycbzisKcOy3NFblRA-XvM7cPmVLzjXJFlNfrLXYP2KFQ5isXl8B2yCRZFcADSG6PMvjua/exec";
+
+  const { createApp } = Vue;
+
+  createApp({
+    data() {
+      const currentYear = new Date().getFullYear();
+      let years = [];
+      for(let y=2024; y <= currentYear + 1; y++) { years.push(y); }
+
+      return {
+        loading: false,
+        tahun: currentYear, years: years,
+        months: ['JAN','FEB','MAR','APR','MEI','JUN','JUL','AGU','SEP','OKT','NOV','DES'],
+        detail: { profil: {}, simpanan: [], loans: [], history: [] }
+      }
+    },
+    computed: {
+       totalSimpanan() { return this.detail.simpanan.reduce((a,b) => a + b.saldo, 0); },
+       totalPinjaman() { return this.detail.loans.reduce((a,b) => a + b.saldo, 0); },
+       totalPerBulan() {
+           let totals = Array(12).fill(0);
+           if(this.detail.history) {
+               this.detail.history.forEach(h => {
+                   h.data.forEach((val, idx) => { totals[idx] += val; });
+               });
+           }
+           return totals;
+       },
+       grandTotalHistory() { return this.totalPerBulan.reduce((a, b) => a + b, 0); }
+    },
+    methods: {
+      init() {
+         // Membaca identitas No Anggota yang dikirim dari Kodular
+         if (window.AppInventor) {
+            let noAnggota = window.AppInventor.getWebViewString(); 
+            if(noAnggota && noAnggota !== "KEMBALI") {
+               this.detail.profil = { no: noAnggota, nama: 'Memuat data...' };
+               this.loadDetail();
+            } else {
+               // Fallback jika tidak ada data
+               this.detail.profil = { no: 'TEST-01', nama: 'Mode Testing' };
+            }
+         }
+      },
+      loadDetail() {
+         if(!this.detail.profil.no) return;
+         this.loading = true;
+         
+         // Memanggil API get_kartu_kendali yang sama persis dengan web!
+         fetch(API_URL, {
+            method: 'POST',
+            body: JSON.stringify({ 
+                action: "get_kartu_kendali", 
+                no_anggota: this.detail.profil.no,
+                tahun: this.tahun,
+                sumber_db: 'Jurnal' // Mobile otomatis ambil database Jurnal berjalan
+            })
+         })
+         .then(r => r.json())
+         .then(res => {
+            if(res.status === "success") {
+                this.detail.simpanan = res.data.simpanan;
+                this.detail.loans = res.data.pinjaman;
+                this.detail.history = res.data.history;
+                this.detail.profil.nama = res.data.nama_anggota;
+            } else {
+                alert(res.message);
+            }
+            this.loading = false;
+         }).catch(err => { alert("Gagal terhubung ke server."); this.loading = false; });
+      },
+      formatRupiah(val) { return new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(val); },
+      formatFull(val) { if(!val || val === 0) return '-'; return new Intl.NumberFormat('id-ID').format(val); },
+      kembali() {
+         // Mengirim perintah ke Kodular untuk menutup layar ini
+         if (window.AppInventor) window.AppInventor.setWebViewString("KEMBALI");
+      }
+    },
+    mounted() { this.init(); }
+  }).mount('#app');
+</script>
+
+</body>
+</html>
