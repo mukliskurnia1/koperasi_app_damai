@@ -40,24 +40,24 @@
   <!-- HEADER & TOMBOL KEMBALI -->
   <div class="header-mobile">
     <button class="btn-back" @click="kembali()"><i class="fas fa-arrow-circle-left"></i></button>
-    <h5 class="mb-0 fw-bold text-success">Kartu Kendali</h5>
+    <h5 class="mb-0 fw-bold text-success">Kartu Kendali Saya</h5>
   </div>
 
-  <!-- ERROR STATE JIKA KODULAR GAGAL KIRIM DATA -->
-  <div v-if="errorMsg" class="alert alert-danger small fw-bold">
+  <!-- ERROR STATE -->
+  <div v-if="errorMsg" class="alert alert-danger small fw-bold shadow-sm">
     <i class="fas fa-exclamation-triangle me-1"></i> {{ errorMsg }}
   </div>
 
   <!-- LOADING -->
   <div v-if="loading" class="text-center py-5 my-5">
      <div class="spinner-border text-success" style="width: 3rem; height: 3rem;"></div>
-     <p class="mt-3 fw-bold text-muted">Menarik data terbaru...</p>
+     <p class="mt-3 fw-bold text-muted">Menarik data dari server...</p>
   </div>
 
-  <!-- AREA DATA -->
+  <!-- AREA DATA UTAMA -->
   <div v-if="!loading && detail.profil.no">
       
-      <!-- KARTU IDENTITAS -->
+      <!-- KARTU IDENTITAS LENGKAP -->
       <div class="card card-dashboard border-start border-5 border-success">
          <div class="card-body p-3">
             <div class="d-flex justify-content-between align-items-start mb-2">
@@ -68,15 +68,16 @@
                      <span class="badge bg-light text-dark border mt-1" style="font-size: 10px;">{{ detail.profil.no }}</span>
                   </div>
                </div>
-               <!-- Pilihan Tahun -->
+               <!-- Pilihan Tahun untuk Riwayat -->
                <select class="form-select form-select-sm fw-bold bg-light shadow-none" style="width: 85px; font-size: 11px;" v-model="tahun" @change="loadDetail">
                   <option v-for="y in years" :value="y">{{ y }}</option>
                </select>
             </div>
+            
             <div class="row pt-2 mt-2 border-top g-2">
                <div class="col-6">
                   <div class="info-text">UNIT KERJA</div>
-                  <div class="info-value text-success">{{ detail.profil.unit || 'Sumedang' }}</div>
+                  <div class="info-value text-success">{{ detail.profil.unit || 'SUMEDANG' }}</div>
                </div>
                <div class="col-6">
                   <div class="info-text">TGL MASUK</div>
@@ -136,10 +137,10 @@
                            <span class="text-muted" style="font-size: 10px;">Sisa Pokok:</span>
                            <span class="fw-bold font-monospace text-danger" style="font-size: 13px;">{{ formatRupiah(l.saldo) }}</span>
                         </div>
-                        <div class="d-flex justify-content-between align-items-center" v-if="l.cicilan_per_bulan">
+                        <div class="d-flex justify-content-between align-items-center mt-1" v-if="l.cicilan_per_bulan">
                            <div style="font-size: 10px; line-height: 1.3;">
                               <span class="text-muted">Cicilan:</span> <span class="fw-bold text-dark">{{ formatRupiah(l.cicilan_per_bulan) }}</span><br>
-                              <span class="text-muted">Estimasi:</span> <span class="fw-bold text-dark">{{ l.sisa_bulan }}</span> bln lagi
+                              <span class="text-muted">Sisa:</span> <span class="fw-bold text-dark">{{ l.sisa_bulan }}</span> bln lagi
                            </div>
                            <span class="badge rounded-pill" :class="l.status === 'LANCAR' ? 'badge-lancar' : 'badge-macet'" style="font-size: 9px;">{{ l.status }}</span>
                         </div>
@@ -150,11 +151,11 @@
          </div>
       </div>
 
-      <!-- RIWAYAT MATRIX (PEMBAYARAN SETORAN) -->
+      <!-- RIWAYAT MATRIX (SETORAN/PEMBAYARAN) -->
       <div class="card card-dashboard">
          <div class="card-header-clean bg-dark text-white d-flex justify-content-between align-items-center">
             <span style="font-size: 11px;"><i class="fas fa-history me-1"></i> Riwayat Pembayaran {{ tahun }}</span>
-            <span class="badge bg-warning text-dark" style="font-size: 9px;">Geser Kiri/Kanan <i class="fas fa-arrows-alt-h"></i></span>
+            <span class="badge bg-warning text-dark" style="font-size: 9px;">Geser <i class="fas fa-arrows-alt-h"></i></span>
          </div>
          <div class="card-body p-0 table-responsive" style="max-height: 400px;">
             <table class="table table-bordered table-sm mb-0 table-history">
@@ -190,7 +191,7 @@
 </div>
 
 <script>
-  // ⚠️ WAJIB GANTI JIKA URL APP SCRIPT ANDA BERUBAH
+  // ⚠️ WAJIB GANTI JIKA URL APP SCRIPT ANDA BERUBAH ⚠️
   const API_URL = "https://script.google.com/macros/s/AKfycbzisKcOy3NFblRA-XvM7cPmVLzjXJFlNfrLXYP2KFQ5isXl8B2yCRZFcADSG6PMvjua/exec";
 
   const { createApp } = Vue;
@@ -207,6 +208,7 @@
         tahun: currentYear, 
         years: years,
         months: ['JAN','FEB','MAR','APR','MEI','JUN','JUL','AGU','SEP','OKT','NOV','DES'],
+        // Inisialisasi detail yang lengkap agar tidak crash (blank) saat data telat masuk
         detail: { 
           profil: { no: '', nama: '', unit: '', tglMasuk: '' }, 
           simpanan: [], 
@@ -220,9 +222,11 @@
        totalPinjaman() { return this.detail.loans.reduce((a,b) => a + b.saldo, 0); },
        totalPerBulan() {
            let totals = Array(12).fill(0);
-           if(this.detail.history) {
+           if(this.detail.history && this.detail.history.length > 0) {
                this.detail.history.forEach(h => {
-                   h.data.forEach((val, idx) => { totals[idx] += val; });
+                   if(h.data) {
+                       h.data.forEach((val, idx) => { totals[idx] += val; });
+                   }
                });
            }
            return totals;
@@ -236,12 +240,13 @@
             let noAnggota = window.AppInventor.getWebViewString(); 
             if(noAnggota && noAnggota !== "KEMBALI" && noAnggota !== "") {
                this.detail.profil.no = noAnggota;
+               this.detail.profil.nama = "Memuat data...";
                this.loadDetail();
             } else {
-               this.errorMsg = "Gagal mendapatkan Identitas dari Aplikasi.";
+               this.errorMsg = "Gagal membaca Identitas Anggota dari Aplikasi.";
             }
          } else {
-            // Mode Testing di Browser PC
+            // Fallback Mode Testing di Browser PC
             this.detail.profil.no = '02-0803-07'; 
             this.loadDetail();
          }
@@ -257,27 +262,32 @@
                 action: "get_kartu_kendali", 
                 no_anggota: this.detail.profil.no,
                 tahun: this.tahun,
-                sumber_db: 'Jurnal' // Mobile selalu mengambil dari Jurnal yang berjalan
+                sumber_db: 'Jurnal'
             })
          })
          .then(r => r.json())
          .then(res => {
             if(res.status === "success") {
-                // Assign data
-                this.detail = res.data;
+                // LOGIKA PENYELAMAT ANTI-CRASH (Fallback jika API masih versi lama)
+                let d = res.data;
                 
-                // PENAWAR ANTI-CRASH: 
-                // Jika API masih mengirim versi lama (pinjaman), kita alihkan otomatis ke (loans)
-                if(!this.detail.loans && this.detail.pinjaman) {
-                    this.detail.loans = this.detail.pinjaman;
+                // Pastikan struktur profil utuh
+                if (d.profil) {
+                    this.detail.profil = d.profil;
+                } else if (d.nama_anggota) {
+                    // Jika API masih mengirim format lama (hanya nama_anggota)
+                    this.detail.profil.nama = d.nama_anggota;
+                    this.detail.profil.unit = "Sumedang";
+                    this.detail.profil.tglMasuk = "-";
                 }
-                // Pastikan array tidak undefined agar layar tidak blank
-                if(!this.detail.simpanan) this.detail.simpanan = [];
-                if(!this.detail.history) this.detail.history = [];
-                if(!this.detail.profil) this.detail.profil = { no: this.searchQuery, nama: 'Data tidak lengkap' };
+
+                // Jika API menggunakan 'pinjaman' (kode lama), ubah paksa menjadi 'loans'
+                this.detail.loans = d.loans || d.pinjaman || [];
+                this.detail.simpanan = d.simpanan || [];
+                this.detail.history = d.history || [];
 
             } else {
-                this.errorMsg = res.message;
+                this.errorMsg = "Pesan Server: " + res.message;
             }
             this.loading = false;
          }).catch(err => { 
@@ -291,7 +301,10 @@
          if (window.AppInventor) window.AppInventor.setWebViewString("KEMBALI");
       }
     },
-    mounted() { this.init(); }
+    mounted() { 
+      // Tunggu DOM siap sebelum inisialisasi API
+      setTimeout(() => { this.init(); }, 300);
+    }
   }).mount('#app');
 </script>
 
