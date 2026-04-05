@@ -263,8 +263,19 @@
          .then(r => r.json())
          .then(res => {
             if(res.status === "success") {
-                // Assign object secara utuh agar persis seperti di web
+                // Assign data
                 this.detail = res.data;
+                
+                // PENAWAR ANTI-CRASH: 
+                // Jika API masih mengirim versi lama (pinjaman), kita alihkan otomatis ke (loans)
+                if(!this.detail.loans && this.detail.pinjaman) {
+                    this.detail.loans = this.detail.pinjaman;
+                }
+                // Pastikan array tidak undefined agar layar tidak blank
+                if(!this.detail.simpanan) this.detail.simpanan = [];
+                if(!this.detail.history) this.detail.history = [];
+                if(!this.detail.profil) this.detail.profil = { no: this.searchQuery, nama: 'Data tidak lengkap' };
+
             } else {
                 this.errorMsg = res.message;
             }
