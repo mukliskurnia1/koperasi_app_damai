@@ -7,212 +7,205 @@
   
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-  <script src="https://unpkg.com/vue@3/dist/vue.global.prod.js"></script>
-
+  
+  <!-- Fallback jika Vue gagal dimuat -->
   <style>
-    [v-cloak] { display: none !important; }
     body { background-color: #f4f7f6; font-family: 'Segoe UI', sans-serif; padding: 15px; padding-bottom: 30px; }
-    
     .header-mobile { display: flex; align-items: center; margin-bottom: 20px; }
     .btn-back { background: none; border: none; font-size: 1.5rem; color: #198754; padding: 0; margin-right: 15px; cursor: pointer; }
-    
     .card-mobile { border: none; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); background: white; margin-bottom: 15px; overflow: hidden; }
     .card-header-clean { background: white; border-bottom: 2px solid #f0f0f0; padding: 12px 15px; font-weight: 700; color: #444; font-size: 0.85rem; text-transform: uppercase; }
-    
     .tr-header { background-color: #f1f8e9; font-weight: bold; color: #2e7d32; font-size: 11px; }
     .tr-total { background-color: #e9ecef !important; font-weight: 900; color: #000; font-size: 12px; }
     .table-mobile td { font-size: 12px; vertical-align: middle; padding: 8px 12px; }
-    
     .nav-pills .nav-link { border-radius: 50px; font-size: 12px; font-weight: bold; padding: 8px 15px; color: #555; }
     .nav-pills .nav-link.active { background-color: #198754; color: white; }
+    
+    /* Menyembunyikan konten sebelum Vue siap, tapi tetap menampilkan header loading */
+    [v-cloak] .vue-content { display: none; }
   </style>
+
+  <!-- Panggil Vue JS -->
+  <script src="https://unpkg.com/vue@3/dist/vue.global.prod.js"></script>
 </head>
 <body>
 
 <div id="app" v-cloak>
   
-  <!-- HEADER & TOMBOL KEMBALI -->
+  <!-- HEADER SELALU TAMPIL (Anti Blank) -->
   <div class="header-mobile d-flex justify-content-between align-items-center">
     <div class="d-flex align-items-center">
-      <button class="btn-back" @click="kembali()"><i class="fas fa-arrow-circle-left"></i></button>
+      <button class="btn-back" @click="kembali()" onclick="if(!window.Vue) alert('Vue belum termuat, tapi tombol kembali berfungsi!'); window.AppInventor ? window.AppInventor.setWebViewString('KEMBALI') : null;"><i class="fas fa-arrow-circle-left"></i></button>
       <h5 class="mb-0 fw-bold text-success">Laporan Koperasi</h5>
     </div>
   </div>
 
-  <!-- FILTER TANGGAL -->
-  <div class="card card-mobile border-start border-4 border-success p-3 mb-3">
-     <label class="small fw-bold text-muted mb-1"><i class="fas fa-calendar-alt me-1"></i> Posisi per Tanggal (Cut-Off):</label>
-     <input type="date" class="form-control fw-bold text-success border-success" v-model="tanggal" @change="loadData()">
-  </div>
-
-  <!-- ERROR & LOADING -->
-  <div v-if="errorMsg" class="alert alert-danger small fw-bold shadow-sm"><i class="fas fa-exclamation-triangle me-1"></i> {{ errorMsg }}</div>
-  <div v-if="loading" class="text-center py-5 my-5">
-     <div class="spinner-border text-success" style="width: 3rem; height: 3rem;"></div>
-     <p class="mt-3 fw-bold text-muted">Menyusun Neraca Buku Besar...</p>
-  </div>
-
-  <!-- KONTEN UTAMA -->
-  <div v-if="!loading && laporan">
-      
-      <!-- NAVIGASI TABS -->
-      <ul class="nav nav-pills nav-fill mb-3 bg-white rounded-pill shadow-sm p-1">
-        <li class="nav-item"><a class="nav-link" :class="{active: tabAktif === 'LR'}" @click="tabAktif = 'LR'" href="#">Laba/Rugi</a></li>
-        <li class="nav-item"><a class="nav-link" :class="{active: tabAktif === 'NR'}" @click="tabAktif = 'NR'" href="#">Neraca</a></li>
-      </ul>
-
-      <!-- TAB 1: LABA RUGI -->
-      <div v-if="tabAktif === 'LR'" class="card card-mobile">
-         <div class="card-header-clean text-center text-success bg-light">LAPORAN LABA RUGI</div>
-         <div class="card-body p-0">
-            <table class="table table-hover table-mobile mb-0">
-               <tbody>
-                  <tr class="tr-header"><td colspan="2"><i class="fas fa-plus-circle me-1"></i> A. PENDAPATAN</td></tr>
-                  <tr v-if="laporan.laba_rugi.pendapatan.list.length === 0"><td colspan="2" class="text-center text-muted fst-italic py-3">Tidak ada pendapatan</td></tr>
-                  <tr v-for="p in laporan.laba_rugi.pendapatan.list">
-                     <td class="ps-3">{{ p.akun }}</td>
-                     <td class="text-end fw-bold">{{ rp(p.saldo) }}</td>
-                  </tr>
-                  <tr class="tr-total text-success"><td class="text-end">Total Pendapatan</td><td class="text-end">Rp {{ rp(laporan.laba_rugi.pendapatan.total) }}</td></tr>
-
-                  <tr class="tr-header"><td colspan="2"><i class="fas fa-minus-circle me-1 text-danger"></i> B. BIAYA OPERASIONAL</td></tr>
-                  <tr v-if="laporan.laba_rugi.biaya.list.length === 0"><td colspan="2" class="text-center text-muted fst-italic py-3">Tidak ada pengeluaran biaya</td></tr>
-                  <tr v-for="b in laporan.laba_rugi.biaya.list">
-                     <td class="ps-3">{{ b.akun }}</td>
-                     <td class="text-end fw-bold">{{ rp(b.saldo) }}</td>
-                  </tr>
-                  <tr class="tr-total text-danger"><td class="text-end">Total Biaya</td><td class="text-end">Rp {{ rp(laporan.laba_rugi.biaya.total) }}</td></tr>
-
-                  <tr class="tr-total text-primary" style="font-size: 14px;">
-                     <td class="text-end py-3">SHU BERSIH</td>
-                     <td class="text-end py-3">Rp {{ rp(laporan.laba_rugi.laba_bersih) }}</td>
-                  </tr>
-               </tbody>
-            </table>
-         </div>
+  <!-- KONTEN VUE -->
+  <div class="vue-content">
+      <!-- FILTER TANGGAL -->
+      <div class="card card-mobile border-start border-4 border-success p-3 mb-3">
+         <label class="small fw-bold text-muted mb-1"><i class="fas fa-calendar-alt me-1"></i> Posisi per Tanggal (Cut-Off):</label>
+         <input type="date" class="form-control fw-bold text-success border-success" v-model="tanggal" @change="loadData()">
       </div>
 
-      <!-- TAB 2: NERACA SALDO -->
-      <div v-if="tabAktif === 'NR'">
-         <!-- Box Aktiva -->
-         <div class="card card-mobile border-top border-4 border-primary mb-3">
-            <div class="card-header-clean bg-light text-primary">AKTIVA (Harta)</div>
-            <table class="table table-mobile mb-0">
-               <tbody>
-                  <tr v-for="h in laporan.neraca.harta.list">
-                     <td class="ps-3">{{ h.akun }}</td><td class="text-end fw-bold">{{ rp(h.saldo) }}</td>
-                  </tr>
-                  <tr class="tr-total text-primary"><td class="text-end">TOTAL AKTIVA</td><td class="text-end">Rp {{ rp(laporan.neraca.total_aktiva) }}</td></tr>
-               </tbody>
-            </table>
-         </div>
-
-         <!-- Box Pasiva -->
-         <div class="card card-mobile border-top border-4 border-danger">
-            <div class="card-header-clean bg-light text-danger">PASIVA (Kewajiban & Modal)</div>
-            <table class="table table-mobile mb-0">
-               <tbody>
-                  <tr class="tr-header"><td colspan="2">KEWAJIBAN (Simpanan/Hutang)</td></tr>
-                  <tr v-for="k in laporan.neraca.kewajiban.list">
-                     <td class="ps-3">{{ k.akun }}</td><td class="text-end fw-bold">{{ rp(k.saldo) }}</td>
-                  </tr>
-                  <tr class="tr-header"><td colspan="2">MODAL (Ekuitas)</td></tr>
-                  <tr v-for="m in laporan.neraca.modal.list">
-                     <td class="ps-3">{{ m.akun }}</td><td class="text-end fw-bold">{{ rp(m.saldo) }}</td>
-                  </tr>
-                  <tr v-if="laporan.neraca.laba_ditahan !== 0">
-                     <td class="ps-3 text-secondary">SHU Ditahan (Tahun Lalu)</td><td class="text-end text-secondary fw-bold">{{ rp(laporan.neraca.laba_ditahan) }}</td>
-                  </tr>
-                  <tr>
-                     <td class="ps-3 text-success fw-bold">SHU Tahun Berjalan</td><td class="text-end text-success fw-bold">{{ rp(laporan.neraca.laba_berjalan) }}</td>
-                  </tr>
-                  
-                  <tr v-if="laporan.neraca.lainnya.list.length > 0" class="bg-warning">
-                     <td colspan="2" class="text-danger fw-bold small text-center">Terdapat Akun Belum Terklasifikasi di Sistem.</td>
-                  </tr>
-
-                  <tr class="tr-total text-danger"><td class="text-end">TOTAL PASIVA</td><td class="text-end">Rp {{ rp(laporan.neraca.total_pasiva) }}</td></tr>
-               </tbody>
-            </table>
-         </div>
-
-         <!-- Indikator Balance -->
-         <div class="alert alert-success text-center fw-bold shadow-sm" v-if="laporan.neraca.total_aktiva === laporan.neraca.total_pasiva">
-            <i class="fas fa-check-circle me-1"></i> NERACA BALANCE (SEIMBANG)
-         </div>
-         <div class="alert alert-danger text-center fw-bold shadow-sm" v-else>
-            <i class="fas fa-times-circle me-1"></i> TIDAK BALANCE (Selisih: Rp {{ rp(Math.abs(laporan.neraca.total_aktiva - laporan.neraca.total_pasiva)) }})
-         </div>
+      <!-- ERROR & LOADING -->
+      <div v-if="errorMsg" class="alert alert-danger small fw-bold shadow-sm"><i class="fas fa-exclamation-triangle me-1"></i> {{ errorMsg }}</div>
+      <div v-if="loading" class="text-center py-5 my-3 bg-white rounded shadow-sm">
+         <div class="spinner-border text-success" style="width: 2.5rem; height: 2.5rem;"></div>
+         <p class="mt-3 fw-bold text-muted small">Menyusun Neraca Buku Besar...</p>
       </div>
 
+      <!-- KONTEN UTAMA -->
+      <div v-if="!loading && laporan">
+          
+          <ul class="nav nav-pills nav-fill mb-3 bg-white rounded-pill shadow-sm p-1">
+            <li class="nav-item"><a class="nav-link" :class="{active: tabAktif === 'LR'}" @click="tabAktif = 'LR'" href="#">Laba/Rugi</a></li>
+            <li class="nav-item"><a class="nav-link" :class="{active: tabAktif === 'NR'}" @click="tabAktif = 'NR'" href="#">Neraca</a></li>
+          </ul>
+
+          <!-- TAB LABA RUGI -->
+          <div v-if="tabAktif === 'LR'" class="card card-mobile">
+             <div class="card-header-clean text-center text-success bg-light">LAPORAN LABA RUGI</div>
+             <div class="card-body p-0">
+                <table class="table table-hover table-mobile mb-0">
+                   <tbody>
+                      <tr class="tr-header"><td colspan="2"><i class="fas fa-plus-circle me-1"></i> PENDAPATAN</td></tr>
+                      <tr v-if="laporan.laba_rugi.pendapatan.list.length === 0"><td colspan="2" class="text-center text-muted fst-italic py-3">Nihil</td></tr>
+                      <tr v-for="p in laporan.laba_rugi.pendapatan.list">
+                         <td class="ps-3">{{ p.akun }}</td><td class="text-end fw-bold">{{ rp(p.saldo) }}</td>
+                      </tr>
+                      <tr class="tr-total text-success"><td class="text-end">Total Pendapatan</td><td class="text-end">Rp {{ rp(laporan.laba_rugi.pendapatan.total) }}</td></tr>
+
+                      <tr class="tr-header"><td colspan="2"><i class="fas fa-minus-circle me-1 text-danger"></i> BIAYA OPERASIONAL</td></tr>
+                      <tr v-if="laporan.laba_rugi.biaya.list.length === 0"><td colspan="2" class="text-center text-muted fst-italic py-3">Nihil</td></tr>
+                      <tr v-for="b in laporan.laba_rugi.biaya.list">
+                         <td class="ps-3">{{ b.akun }}</td><td class="text-end fw-bold">{{ rp(b.saldo) }}</td>
+                      </tr>
+                      <tr class="tr-total text-danger"><td class="text-end">Total Biaya</td><td class="text-end">Rp {{ rp(laporan.laba_rugi.biaya.total) }}</td></tr>
+
+                      <tr class="tr-total text-primary" style="font-size: 14px;">
+                         <td class="text-end py-3">SHU BERSIH</td><td class="text-end py-3">Rp {{ rp(laporan.laba_rugi.laba_bersih) }}</td>
+                      </tr>
+                   </tbody>
+                </table>
+             </div>
+          </div>
+
+          <!-- TAB NERACA -->
+          <div v-if="tabAktif === 'NR'">
+             <div class="card card-mobile border-top border-4 border-primary mb-3">
+                <div class="card-header-clean bg-light text-primary">AKTIVA (Harta)</div>
+                <table class="table table-mobile mb-0">
+                   <tbody>
+                      <tr v-for="h in laporan.neraca.harta.list">
+                         <td class="ps-3">{{ h.akun }}</td><td class="text-end fw-bold">{{ rp(h.saldo) }}</td>
+                      </tr>
+                      <tr class="tr-total text-primary"><td class="text-end">TOTAL AKTIVA</td><td class="text-end">Rp {{ rp(laporan.neraca.total_aktiva) }}</td></tr>
+                   </tbody>
+                </table>
+             </div>
+
+             <div class="card card-mobile border-top border-4 border-danger">
+                <div class="card-header-clean bg-light text-danger">PASIVA (Kewajiban & Modal)</div>
+                <table class="table table-mobile mb-0">
+                   <tbody>
+                      <tr class="tr-header"><td colspan="2">KEWAJIBAN</td></tr>
+                      <tr v-for="k in laporan.neraca.kewajiban.list">
+                         <td class="ps-3">{{ k.akun }}</td><td class="text-end fw-bold">{{ rp(k.saldo) }}</td>
+                      </tr>
+                      <tr class="tr-header"><td colspan="2">MODAL (Ekuitas)</td></tr>
+                      <tr v-for="m in laporan.neraca.modal.list">
+                         <td class="ps-3">{{ m.akun }}</td><td class="text-end fw-bold">{{ rp(m.saldo) }}</td>
+                      </tr>
+                      <tr v-if="laporan.neraca.laba_ditahan !== 0">
+                         <td class="ps-3 text-secondary">SHU Ditahan</td><td class="text-end text-secondary fw-bold">{{ rp(laporan.neraca.laba_ditahan) }}</td>
+                      </tr>
+                      <tr>
+                         <td class="ps-3 text-success fw-bold">SHU Tahun Berjalan</td><td class="text-end text-success fw-bold">{{ rp(laporan.neraca.laba_berjalan) }}</td>
+                      </tr>
+                      <tr class="tr-total text-danger"><td class="text-end">TOTAL PASIVA</td><td class="text-end">Rp {{ rp(laporan.neraca.total_pasiva) }}</td></tr>
+                   </tbody>
+                </table>
+             </div>
+
+             <div class="alert alert-success text-center fw-bold shadow-sm" v-if="laporan.neraca.total_aktiva === laporan.neraca.total_pasiva">
+                <i class="fas fa-check-circle me-1"></i> NERACA SEIMBANG
+             </div>
+             <div class="alert alert-danger text-center fw-bold shadow-sm" v-else>
+                <i class="fas fa-times-circle me-1"></i> SELISIH: Rp {{ rp(Math.abs(laporan.neraca.total_aktiva - laporan.neraca.total_pasiva)) }}
+             </div>
+          </div>
+      </div>
   </div>
 </div>
 
 <script>
   // ⚠️ GANTI DENGAN URL WEB APP APPS SCRIPT BAPAK! ⚠️
-  const API_URL = "https://script.google.com/macros/s/AKfycbzisKcOy3NFblRA-XvM7cPmVLzjXJFlNfrLXYP2KFQ5isXl8B2yCRZFcADSG6PMvjua/exec";
+  const API_URL = "ISI_DENGAN_URL_WEB_APP_BAPAK_YANG_ASLI";
 
-  const { createApp } = Vue;
+  // Pastikan Vue termuat
+  if (typeof Vue === 'undefined') {
+      alert("Gagal memuat sistem. Pastikan HP Anda terhubung ke internet.");
+  } else {
+      const { createApp } = Vue;
 
-  createApp({
-    data() {
-      // Set default tanggal hari ini (Format YYYY-MM-DD)
-      let now = new Date();
-      let tglDefault = now.getFullYear() + "-" + String(now.getMonth() + 1).padStart(2, '0') + "-" + String(now.getDate()).padStart(2, '0');
+      createApp({
+        data() {
+          let now = new Date();
+          let tglDefault = now.getFullYear() + "-" + String(now.getMonth() + 1).padStart(2, '0') + "-" + String(now.getDate()).padStart(2, '0');
 
-      return {
-        loading: false,
-        errorMsg: '',
-        tanggal: tglDefault, 
-        tabAktif: 'LR',
-        laporan: null
-      }
-    },
-    methods: {
-      loadData() {
-         if(!this.tanggal) return;
-         this.loading = true;
-         this.errorMsg = '';
-         this.laporan = null;
-         
-         fetch(API_URL, {
-            method: 'POST',
-            body: JSON.stringify({ 
-                action: "get_laporan_mobile", 
-                tanggal: this.tanggal
-            })
-         })
-         .then(r => r.json())
-         .then(res => {
-            if(res.status === "success") {
-                this.laporan = res.data;
-            } else {
-                this.errorMsg = "Pesan Server: " + res.message;
-            }
-            this.loading = false;
-         }).catch(err => { 
-            this.errorMsg = "Koneksi terputus. Pastikan HP terhubung ke Internet."; 
-            this.loading = false; 
-         });
-      },
-      rp(val) { 
-         if(!val) return '0';
-         return new Intl.NumberFormat('id-ID').format(val); 
-      },
-      kembali() {
-         // Kirim perintah kembali ke Kodular
-         if (window.AppInventor) {
-             window.AppInventor.setWebViewString("KEMBALI");
-         } else {
-             alert("Tombol Kembali Ditekan (Hanya berfungsi di Aplikasi Kodular)");
-         }
-      }
-    },
-    mounted() { 
-      // Tunggu DOM siap sebelum menarik data
-      setTimeout(() => { this.loadData(); }, 300);
-    }
-  }).mount('#app');
+          return {
+            loading: false,
+            errorMsg: '',
+            tanggal: tglDefault, 
+            tabAktif: 'LR',
+            laporan: null
+          }
+        },
+        methods: {
+          loadData() {
+             if(!this.tanggal) return;
+             this.loading = true;
+             this.errorMsg = '';
+             this.laporan = null;
+             
+             fetch(API_URL, {
+                method: 'POST',
+                body: JSON.stringify({ 
+                    action: "get_laporan_mobile", 
+                    tanggal: this.tanggal
+                })
+             })
+             .then(r => r.json())
+             .then(res => {
+                if(res.status === "success") {
+                    this.laporan = res.data;
+                } else {
+                    this.errorMsg = "Pesan Server: " + res.message;
+                }
+                this.loading = false;
+             }).catch(err => { 
+                this.errorMsg = "Koneksi ke server terputus. Pastikan link API benar dan HP terhubung internet."; 
+                this.loading = false; 
+             });
+          },
+          rp(val) { 
+             if(!val) return '0';
+             return new Intl.NumberFormat('id-ID').format(val); 
+          },
+          kembali() {
+             if (window.AppInventor) {
+                 window.AppInventor.setWebViewString("KEMBALI");
+             } else {
+                 alert("Tombol Kembali Ditekan (Hanya berfungsi di Kodular)");
+             }
+          }
+        },
+        mounted() { 
+          setTimeout(() => { this.loadData(); }, 300);
+        }
+      }).mount('#app');
+  }
 </script>
 
 </body>
