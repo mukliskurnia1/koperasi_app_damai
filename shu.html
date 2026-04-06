@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+  <title>Informasi SHU Koperasi</title>
+  
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+
+  <style>
+    body { background-color: #f4f7f6; font-family: 'Segoe UI', sans-serif; padding: 15px; }
+    
+    .header-mobile { display: flex; align-items: center; margin-bottom: 25px; }
+    .btn-back { background: none; border: none; font-size: 1.5rem; color: #198754; padding: 0; margin-right: 15px; cursor: pointer; }
+    
+    .card-status { 
+      border: none; 
+      border-radius: 20px; 
+      background: white; 
+      box-shadow: 0 10px 25px rgba(0,0,0,0.05); 
+      padding: 40px 20px; 
+      text-align: center;
+    }
+
+    .icon-wrapper {
+      width: 100px;
+      height: 100px;
+      background-color: #fff3cd;
+      color: #ffc107;
+      border-radius: 50%;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      font-size: 3rem;
+      margin: 0 auto 25px;
+    }
+
+    .status-title { font-weight: 800; color: #333; margin-bottom: 10px; }
+    .status-desc { color: #6c757d; font-size: 0.95rem; line-height: 1.6; }
+    
+    .info-box {
+      background-color: #e8f5e9;
+      border-radius: 12px;
+      padding: 15px;
+      margin-top: 30px;
+      text-align: left;
+      border-left: 5px solid #198754;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="header-mobile">
+    <button class="btn-back" onclick="kembali()"><i class="fas fa-arrow-circle-left"></i></button>
+    <h5 class="mb-0 fw-bold text-success">Informasi SHU</h5>
+  </div>
+
+  <div class="card-status">
+    <div class="icon-wrapper">
+      <i class="fas fa-tools"></i>
+    </div>
+    
+    <h4 class="status-title">Perhitungan Belum Tersedia</h4>
+    <p class="status-desc">
+      Sisa Hasil Usaha (SHU) saat ini masih dalam proses akumulasi berjalan. Data final hanya akan muncul setelah periode <b>Tutup Buku Akhir Tahun</b> selesai dilakukan.
+    </p>
+
+    <div class="info-box">
+      <div class="small fw-bold text-success mb-1"><i class="fas fa-info-circle me-1"></i> Catatan Pengurus:</div>
+      <div class="small text-dark">
+        Pembagian SHU akan diputuskan dan disahkan secara resmi melalui <b>Rapat Anggota Tahunan (RAT)</b> Koperasi Konsumen Karyawan Griya Sumedang.
+      </div>
+    </div>
+
+    <button class="btn btn-outline-success w-100 mt-4 py-2 fw-bold rounded-pill" onclick="kembali()">
+      <i class="fas fa-home me-1"></i> Kembali ke Beranda
+    </button>
+  </div>
+
+  <script>
+    function kembali() {
+      if (window.AppInventor) {
+        // Mengirim perintah ke Kodular
+        window.AppInventor.setWebViewString("KEMBALI");
+      } else {
+        alert("Kembali ke Beranda");
+      }
+    }
+  </script>
+
+</body>
+</html>
